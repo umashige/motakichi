@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+
+<html lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Form Validation</title>
+    <style>
+        .form-group{
+            margin-bottom: 20px;
+        }
+        .form-label{
+            display: block;
+            color: #666;
+        }
+        .form-input{
+            border: 0;
+            border-bottom: 1px solid #ccc;
+        }
+        .form-error{
+            visibility: hidden;
+        }
+        .form-group.invalid .form-label{
+            color: #c00;
+        }
+        .form-group.invalid .form-input{
+            color: #c00;
+            border-width: 2px;
+        }
+        .form-group.invalid .form-error{
+            visibility: visible;
+            margin: 4px 0 10px;
+            color: #c00;
+            font-size: 85%;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-group">
+        <label class="form-label" for="name">名前</label>
+        <input class="form-input" id="name" name="name" type="text" />
+        <div class="form-error"></div>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="postalcode">郵便番号</label>
+        <input class="form-input" id="postalcode" name="postalcode" type="text" />
+        <div class="form-error"></div>
+    </div>
+    <script>
+        (function () {
+            var validators = {};
+
+            validators.Required = function () {
+                return function (input) {
+                    if (input.value.length > 0) {
+                        return { valid: true };
+                    }
+                    return { valid: false, message: "入力してください" };
+                };
+            };
+
+            validators.MaxLength = function (len) {
+                return function (input) {
+                    if (input.value.length <= len) {
+                        return { valid: true };
+                    }
+                    return { valid: false, message: len + "文字以内で入力してください" };
+                };
+            };
+
+            validators.Postalcode = function () {
+                return function (input) {
+                    if (input.value.length < 1 || input.value.match(/^\d{7}$/)) {
+                        return { valid: true };
+                    }
+                    return { valid: false, message: "半角数字7桁で入力してください" };
+                };
+            };
+
+            var validationMap = {
+                'name': [validators.Required(), validators.MaxLength(10)],
+                'postalcode': [validators.Postalcode()]
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                for (var inputName in validationMap) {
+                    var inputs = document.querySelectorAll('.form-group [name="' + inputName + '"]');
+                    if (inputs.length < 1) {
+                        continue;
+                    }
+                    [].forEach.call(inputs, function (input) {
+                        var formGroup = input.parentElement;
+                        var formError;
+                        var validations = validationMap[inputName];
+                        while (!formGroup.classList.contains('form-group')) {
+                            formGroup = formGroup.parentElement;
+                        }
+                        formError = formGroup.querySelector('.form-error');
+                        function validateInput() {
+                            for (var i = 0; i < validations.length; i++) {
+                                result = validations[i](input);
+                                if (result.valid) {
+                                    formGroup.classList.remove('invalid');
+                                } else {
+                                    formGroup.classList.add('invalid');
+                                    formError.textContent = result.message;
+                                    break;
+                                }
+                            }
+                        }
+                        input.addEventListener('change', validateInput);
+                        input.addEventListener('input', validateInput);
+                    });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
